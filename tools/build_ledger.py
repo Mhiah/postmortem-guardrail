@@ -1,4 +1,4 @@
-"""build_ledger.py — regenerates docs/index.html from guardrails/reports/*.md.
+"""build_ledger.py — regenerates docs/ledger.html from guardrails/reports/*.md.
 
 Usage (from repo root):
     python tools/build_ledger.py
@@ -10,7 +10,7 @@ import re
 from datetime import date
 
 REPORTS_DIR = "guardrails/reports"
-OUTPUT_FILE = "docs/index.html"
+OUTPUT_FILE = "docs/ledger.html"
 
 
 def parse_report(path):

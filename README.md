@@ -11,7 +11,7 @@ postmortem (Markdown or PDF) and a team of Bob subagents delivers, with evidence
 3. **Minimal fix.**
 4. **Guardrail**: a static-analysis rule that blocks the whole *bug class* codebase-wide, enforced in CI.
 
-Results are published to the **Guardrail Ledger** (`docs/index.html`), a public record of every incident
+Results are published to a plain-English homepage (`docs/index.html`) and the **Guardrail Ledger** (`docs/ledger.html`), a public record of every incident
 and the rule that now prevents it.
 
 ## How it uses IBM Bob
@@ -74,6 +74,6 @@ shopfront/            Sample app under repair
 guardrails/run.py     Guardrail scanner; rules live in guardrails/rules/
 guardrails/reports/   One Guardrail Report per incident, written by Bob
 tools/build_ledger.py Builds the Guardrail Ledger page
-docs/index.html       Guardrail Ledger (GitHub Pages)
+docs/index.html       Homepage (GitHub Pages); docs/ledger.html = full Guardrail Ledger
 bob_sessions/         Bob task summary screenshots (required for submission)
 ```

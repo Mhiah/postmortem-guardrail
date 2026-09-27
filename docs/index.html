@@ -1,65 +1,175 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guardrail Ledger</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Postmortem → Guardrail</title>
+<meta name="description" content="IBM Bob turns an incident report into a fix, a test and an automatic check, so the same bug never ships twice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--mute:#5b6270;--line:#e2e5ea;--accent:#0f62fe;--sev:#da1e28}
-@media (prefers-color-scheme:dark){:root{--bg:#111318;--card:#1a1d24;--ink:#e8eaee;--mute:#9aa2b1;--line:#2b303a;--accent:#78a9ff;--sev:#ff8389}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"IBM Plex Sans",sans-serif}
-main{max-width:880px;margin:0 auto;padding:32px 16px}h1{margin:0 0 4px;font-size:28px}.sub{color:var(--mute);margin:0 0 24px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
-.stat b{display:block;font-size:26px}.stat span{color:var(--mute);font-size:13px}
-article{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
-header{display:flex;flex-wrap:wrap;align-items:center;gap:10px}h2{font-size:18px;margin:0;flex:1}
-.sev{font-weight:600;font-size:13px}.rule{background:var(--accent);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
-dl{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;margin:14px 0}dt{color:var(--mute)}dd{margin:0}
-code{font:13px ui-monospace,Menlo,monospace;background:var(--bg);padding:1px 5px;border-radius:4px}
-pre{overflow:auto;background:var(--bg);padding:12px;border-radius:8px;font-size:12px}summary{cursor:pointer;color:var(--accent)}
-.empty{color:var(--mute)}@media (max-width:560px){dl{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
-</style></head><body><main>
-<h1>Guardrail Ledger</h1>
-<p class="sub">Every incident fixed once, forever. Built with IBM Bob. Updated 2026-09-27.</p>
-<section class="stats">
-  <div class="stat"><b>3</b><span>postmortems closed</span></div>
-  <div class="stat"><b>3</b><span>guardrails in CI</span></div>
-  <div class="stat"><b>20.0</b><span>avg minutes, postmortem to guardrail</span></div>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#141a26; --soft:#4a5568; --mute:#6b7585; --line:#dde2ea;
+  --blue:#0f62fe; --blue-soft:#e5edff; --red:#c9252d; --red-soft:#fdecee; --green:#16803c; --green-soft:#e6f4ea;
+  --hero:#141a26; --hero-ink:#f3f5f8; --hero-soft:#c6cfdc;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f131b; --surface:#171d28; --ink:#eef1f5; --soft:#b4bfcd; --mute:#8d99ae; --line:#2a3342;
+    --blue:#78a9ff; --blue-soft:#1b2a47; --red:#ff8389; --red-soft:#3a1d22; --green:#6fdc8c; --green-soft:#16301f;
+    --hero:#0a0e15; --hero-ink:#f3f5f8; --hero-soft:#c6cfdc;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--blue)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.hero{background:var(--hero);color:var(--hero-ink);padding:72px 0 80px}
+.eyebrow{font:600 13px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:#78a9ff;margin:0 0 20px}
+h1{font-size:clamp(36px,6vw,60px);line-height:1.08;margin:0 0 20px;letter-spacing:-.01em}
+.lead{font-size:clamp(18px,2.4vw,22px);color:var(--hero-soft);max-width:720px;margin:0 0 32px}
+.btns{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-block;padding:12px 20px;border-radius:8px;font-weight:600;text-decoration:none}
+.btn.primary{background:#0f62fe;color:#fff}
+.btn.ghost{border:1px solid #3a4659;color:var(--hero-ink)}
+section{padding:64px 0}
+h2{font-size:clamp(26px,3.6vw,36px);line-height:1.2;margin:0 0 12px}
+.sub{color:var(--soft);max-width:720px;margin:0 0 36px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:700;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:20px}
+.card p{margin:0;color:var(--soft)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
+.stat b{display:block;font-size:34px;line-height:1.1;color:var(--blue)}
+.stat span{color:var(--soft);font-size:15px}
+.incident{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:20px}
+.incident-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:18px}
+.incident-head h3{margin:0;font-size:21px;flex:1 1 360px}
+.tag{font:600 13px/1 "IBM Plex Mono",monospace;padding:6px 10px;border-radius:999px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.box{border-radius:10px;padding:16px}
+.box .label{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+.box p{margin:0}
+.bad{background:var(--red-soft)} .bad .label{color:var(--red)}
+.found{background:var(--blue-soft)} .found .label{color:var(--blue)}
+.good{background:var(--green-soft)} .good .label{color:var(--green)}
+code{font:14px "IBM Plex Mono",monospace;background:var(--bg);border:1px solid var(--line);padding:1px 6px;border-radius:5px}
+.team{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.team .card h3{font-size:18px}
+.terminal{background:#0b0f17;color:#c6cfdc;border-radius:12px;padding:20px;font:14px/1.6 "IBM Plex Mono",monospace;overflow-x:auto;border:1px solid #2a3342}
+.terminal .err{color:#ff8389}
+footer{border-top:1px solid var(--line);padding:32px 0 48px;color:var(--mute);font-size:15px}
+footer .links{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:10px}
+@media (max-width:820px){.steps,.flow{grid-template-columns:1fr}.stats,.team{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Built with IBM Bob 2.0</p>
+    <h1>Postmortem → Guardrail</h1>
+    <p class="lead">When software breaks, teams write a report about what went wrong. Then the same mistake happens again somewhere else. This project uses IBM Bob to turn each report into a fix <b>and</b> an automatic check, so that mistake can never ship twice.</p>
+    <div class="btns">
+      <a class="btn primary" href="#results">See what Bob fixed</a>
+      <a class="btn ghost" href="https://github.com/Mhiah/postmortem-guardrail">View the code on GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">A "postmortem" is the write-up a team makes after something goes wrong in production. Postmortem → Guardrail reads it and does the follow-up work that usually gets forgotten.</p>
+    <div class="steps">
+      <div class="card"><div class="num">1</div><h3>Give Bob the report</h3><p>Drop the incident write-up (a Markdown file or a PDF) into the project and ask Bob to close it out.</p></div>
+      <div class="card"><div class="num">2</div><h3>Bob finds and fixes the bug</h3><p>Bob locates the exact line of code, writes a test that fails because of the bug, then fixes it until the test passes.</p></div>
+      <div class="card"><div class="num">3</div><h3>Bob adds a guardrail</h3><p>Bob writes an automatic check that runs on every code change and blocks that whole kind of mistake, anywhere in the code.</p></div>
+    </div>
+  </div>
 </section>
-<article>
-  <header>
-    <h2>INC-2041 — Black Friday promo ended six hours early</h2>
-    <span class="sev" style="color:#ff832b">SEV-2</span>
-    <span class="rule">GR-2041</span>
-  </header>
-  <dl>
-    <dt>Root cause</dt><dd>`shopfront/promotions.py:16` — `_parse_expiry` truncated the ISO-8601 expiry string to 19 characters (`[:19]`), silently discarding the UTC offset (`-06:00`). The resulting naive datetime represented merchant local time, but `is_active` compared it against `datetime.utcnow()` (also naive but already UTC). When the UTC clock hit 18:00 on 2025-11-28 the UTC value numerically exceeded the naked `23:59` local string, marking BF30 expired six hours before the intended midnight Central deadline.</dd>
-    <dt>Bug class</dt><dd>Timezone offset silently discarded when parsing ISO-8601 strings, causing naive-vs-naive datetime comparisons that are wrong by the full UTC offset.</dd>
-    <dt>Fix</dt><dd>Two minimal changes to `shopfront/promotions.py`:</dd>
-    <dt>Minutes</dt><dd>18</dd>
-  </dl>
-</article>
-<article>
-  <header>
-    <h2>INC-2057 — Invoices off by one cent, reconciliation failed</h2>
-    <span class="sev" style="color:#f1c21b">SEV-3</span>
-    <span class="rule">GR-2057</span>
-  </header>
-  <dl>
-    <dt>Root cause</dt><dd>`shopfront/billing.py:15` and `billing.py:26` — two cooperating bugs.</dd>
-    <dt>Bug class</dt><dd>Monetary arithmetic performed with binary floating-point (`float`), producing banker's rounding and accumulation truncation errors at the cent level.</dd>
-    <dt>Fix</dt><dd>Two minimal changes to `shopfront/billing.py`:</dd>
-    <dt>Minutes</dt><dd>22</dd>
-  </dl>
-</article>
-<article>
-  <header>
-    <h2>INC-2063 — Customers charged twice after gateway timeouts</h2>
-    <span class="sev" style="color:#da1e28">SEV-1</span>
-    <span class="rule">GR-2063</span>
-  </header>
-  <dl>
-    <dt>Root cause</dt><dd>`shopfront/payments.py:13` — `gateway.charge(amount_cents=amount_cents, reference=order_id)` is called inside a retry loop without an `idempotency_key`. When the gateway captures the payment but the response times out, the caller raises `GatewayTimeout`, retries, and `gateway.charge()` creates a brand-new charge — the gateway has no way to deduplicate it.</dd>
-    <dt>Bug class</dt><dd>Non-idempotent external API call retried without an idempotency key, causing duplicate side-effects on timeout.</dd>
-    <dt>Fix</dt><dd>Two minimal changes to `shopfront/payments.py`:</dd>
-    <dt>Minutes</dt><dd>20</dd>
-  </dl>
-</article>
-</main></body></html>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="stats">
+      <div class="card stat"><b>3 of 3</b><span>incident reports closed</span></div>
+      <div class="card stat"><b>~20 min</b><span>per incident, report to guardrail</span></div>
+      <div class="card stat"><b>9 → 18</b><span>automated tests passing</span></div>
+      <div class="card stat"><b>9.32</b><span>Bobcoins for the whole run</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="results" style="padding-top:24px">
+  <div class="wrap">
+    <h2>What Bob fixed</h2>
+    <p class="sub">We gave Bob three incident reports for a sample online shop. Each one is a real-world type of bug that costs companies money.</p>
+
+    <article class="incident">
+      <div class="incident-head"><h3>A Black Friday discount ended six hours early</h3><span class="tag">Guardrail GR-2041</span></div>
+      <div class="flow">
+        <div class="box bad"><p class="label">What went wrong</p><p>A promo code set to expire at midnight Central stopped working at 6 PM. About 3,100 shoppers were turned away.</p></div>
+        <div class="box found"><p class="label">What Bob found</p><p>The code threw away the time zone when reading the expiry date, then compared it to a clock running in a different time zone.</p></div>
+        <div class="box good"><p class="label">What stops it now</p><p>Dates keep their time zone. A check now blocks the unsafe date function anywhere in the code.</p></div>
+      </div>
+    </article>
+
+    <article class="incident">
+      <div class="incident-head"><h3>1,870 invoices were off by one cent</h3><span class="tag">Guardrail GR-2057</span></div>
+      <div class="flow">
+        <div class="box bad"><p class="label">What went wrong</p><p>Customers were charged a cent more or less than their receipt said. Finance spent about 14 hours fixing it by hand.</p></div>
+        <div class="box found"><p class="label">What Bob found</p><p>Money was stored as approximate decimal numbers, so $69.57 could become $69.56 after rounding.</p></div>
+        <div class="box good"><p class="label">What stops it now</p><p>Money is calculated exactly to the cent. A check now flags money fields stored the unsafe way.</p></div>
+      </div>
+    </article>
+
+    <article class="incident">
+      <div class="incident-head"><h3>Customers were charged twice after a timeout</h3><span class="tag">Guardrail GR-2063</span></div>
+      <div class="flow">
+        <div class="box bad"><p class="label">What went wrong</p><p>When the payment provider was slow, 245 customers were charged two or three times. $18,420 was refunded.</p></div>
+        <div class="box found"><p class="label">What Bob found</p><p>On a timeout the code simply tried again, with nothing telling the provider "this is the same payment".</p></div>
+        <div class="box good"><p class="label">What stops it now</p><p>Every retry carries the same payment ID, so it can only charge once. A check now blocks retries without one.</p></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section style="padding-top:24px">
+  <div class="wrap">
+    <h2>The guardrail in action</h2>
+    <p class="sub">To prove each check works, Bob ran them against the original, buggy code. They caught every bug, naming the incident each one came from, so the next developer knows why the rule exists.</p>
+    <div class="terminal">
+      $ py -m guardrails.run<br>
+      <span class="err">shopfront/payments.py:13: GR-2063 [INC-2063] gateway.charge() inside a retry loop must pass idempotency_key</span><br>
+      <span class="err">3 violation(s)  ✗ build blocked</span>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:24px">
+  <div class="wrap">
+    <h2>How IBM Bob did the work</h2>
+    <p class="sub">We set Bob up as a small team of specialists. Each one can only change its own files, and a lead checks their work before signing off.</p>
+    <div class="team">
+      <div class="card"><h3>🛡️ Orchestrator</h3><p>Reads the reports, hands out the work, runs every check itself and writes the final report.</p></div>
+      <div class="card"><h3>🔎 Investigator</h3><p>Finds the root cause and writes the failing test. One runs per incident, at the same time.</p></div>
+      <div class="card"><h3>🔧 Fixer</h3><p>Makes the smallest code change that turns the test green.</p></div>
+      <div class="card"><h3>🧱 Guardrail Author</h3><p>Writes the automatic check that blocks the mistake from now on.</p></div>
+    </div>
+    <p class="sub" style="margin-top:24px">Bob features used: custom modes, subagents, parallel tasks, and reading the PDF report directly. When one check came back too strict, the Orchestrator sent it back to be tightened before approving it.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="ledger.html">Technical ledger (full reports)</a>
+      <a href="https://github.com/Mhiah/postmortem-guardrail">Source code</a>
+      <a href="https://github.com/Mhiah/postmortem-guardrail/tree/main/bob_sessions">Bob session evidence</a>
+    </div>
+    <p>Built for the IBM Bob 2.0 Hackathon. The shop, incidents and data are sample material made for this demo.</p>
+  </div>
+</footer>
+</body>
+</html>
