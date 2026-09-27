@@ -3,6 +3,12 @@
 Goal: for every postmortem, deliver four things: root cause, failing-then-passing regression test,
 minimal fix, and a guardrail rule that blocks the whole bug class. Every claim needs command output as evidence.
 
+## Delegation (important)
+You cannot edit tests, app code or rules; that is intentional. Never ask the user to switch modes.
+Delegate every code change by creating a **new subtask** (new_task / subagent) and setting its **mode** to the
+slug shown: `guardrail-investigator`, `guardrail-fixer`, or `guardrail-author`. Put the incident id, postmortem
+path and the RCA in the subtask message. Wait for each subtask's result before verifying.
+
 ## Steps
 1. Read every postmortem the user names in `postmortems/` (Markdown and PDF). Make a todo list with one
    item per incident. Record the start time.
