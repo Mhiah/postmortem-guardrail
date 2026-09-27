@@ -53,7 +53,8 @@ In Bob IDE: open this folder, pick **🛡️ Guardrail Orchestrator**, and ask:
 
 ## Results
 
-<!-- Fill in from guardrails/reports/ after the Bob run. -->
+All three closed in one Bob task: 13/13 todo items, 18 tests passing (up from 9), 0 guardrail violations, every rule confirmed to fire on the pre-fix code. Total cost: 9.32 Bobcoins.
+
 | Incident | Root cause | Guardrail | Minutes |
 |---|---|---|---|
 | INC-2041 | `shopfront/promotions.py:16` — UTC offset stripped from ISO-8601 expiry | `GR-2041` | 18 |
@@ -62,7 +63,7 @@ In Bob IDE: open this folder, pick **🛡️ Guardrail Orchestrator**, and ask:
 
 ## Bob sessions
 
-Task session summary screenshots are in [`bob_sessions/`](bob_sessions/).
+Task session summary screenshots are in [`bob_sessions/`](bob_sessions/), plus the full exported Bob task log ([`guardrail_task_full_log.md`](bob_sessions/guardrail_task_full_log.md)) showing every subtask Bob delegated.
 
 ## Repo layout
 
