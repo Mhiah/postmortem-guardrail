@@ -12,3 +12,5 @@
    buggy code) and one it must allow (the fixed pattern).
 5. Keep false positives low: the rule must report 0 violations on the fixed codebase.
 6. Run `python -m pytest -q tests/test_guardrails.py` and return the rule path, what it detects, and the output.
+
+> Environment: on Windows, if `python` is not found, use `py` instead (e.g. `py -m pytest -q`, `py -m guardrails.run`).

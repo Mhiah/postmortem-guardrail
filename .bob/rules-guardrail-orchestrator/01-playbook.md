@@ -24,3 +24,5 @@ minimal fix, and a guardrail rule that blocks the whole bug class. Every claim n
 - One incident never blocks another: if one subagent fails, finish the others and report the failure.
 - Do not widen scope beyond what the postmortem's action items ask.
 - Remind the user to screenshot the task summary into `bob_sessions/` when you finish.
+
+> Environment: on Windows, if `python` is not found, use `py` instead (e.g. `py -m pytest -q`, `py -m guardrails.run`).

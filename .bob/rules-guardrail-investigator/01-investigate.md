@@ -16,3 +16,5 @@ BUG_CLASS: <general mistake>
 TEST: <path>::<name>
 FAILURE: <assertion error excerpt>
 ```
+
+> Environment: on Windows, if `python` is not found, use `py` instead (e.g. `py -m pytest -q`, `py -m guardrails.run`).

@@ -7,3 +7,5 @@
    tests only if they encoded the buggy behaviour, and say so.
 4. Run the regression test, then `python -m pytest -q`. Both must pass.
 5. Return: files changed, a one-paragraph explanation, and the pytest output.
+
+> Environment: on Windows, if `python` is not found, use `py` instead (e.g. `py -m pytest -q`, `py -m guardrails.run`).
