@@ -1,5 +1,8 @@
 """Invoice totals sent to the payment processor."""
 from dataclasses import dataclass
+from decimal import Decimal, ROUND_HALF_UP
+
+_CENT = Decimal("0.01")
 
 
 @dataclass
@@ -11,8 +14,11 @@ class LineItem:
 
 
 def line_total(item: LineItem) -> float:
-    subtotal = item.unit_price * item.quantity
-    return round(subtotal * (1 + item.tax_rate), 2)
+    unit_price = Decimal(str(item.unit_price))
+    tax_rate = Decimal(str(item.tax_rate))
+    subtotal = unit_price * item.quantity
+    total = subtotal * (1 + tax_rate)
+    return float(total.quantize(_CENT, rounding=ROUND_HALF_UP))
 
 
 def invoice_total(items: list[LineItem]) -> float:
@@ -23,4 +29,9 @@ def invoice_total(items: list[LineItem]) -> float:
 
 
 def invoice_total_cents(items: list[LineItem]) -> int:
-    return int(invoice_total(items) * 100)
+    total = sum(
+        Decimal(str(item.unit_price)) * item.quantity
+        * (1 + Decimal(str(item.tax_rate)))
+        for item in items
+    )
+    return int(total.quantize(_CENT, rounding=ROUND_HALF_UP) * 100)

@@ -10,7 +10,7 @@ main{max-width:880px;margin:0 auto;padding:32px 16px}h1{margin:0 0 4px;font-size
 .stat b{display:block;font-size:26px}.stat span{color:var(--mute);font-size:13px}
 article{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px}h2{font-size:18px;margin:0;flex:1}
-.sev{color:var(--sev);font-weight:600;font-size:13px}.rule{background:var(--accent);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
+.sev{font-weight:600;font-size:13px}.rule{background:var(--accent);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
 dl{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;margin:14px 0}dt{color:var(--mute)}dd{margin:0}
 code{font:13px ui-monospace,Menlo,monospace;background:var(--bg);padding:1px 5px;border-radius:4px}
 pre{overflow:auto;background:var(--bg);padding:12px;border-radius:8px;font-size:12px}summary{cursor:pointer;color:var(--accent)}
@@ -19,9 +19,47 @@ pre{overflow:auto;background:var(--bg);padding:12px;border-radius:8px;font-size:
 <h1>Guardrail Ledger</h1>
 <p class="sub">Every incident fixed once, forever. Built with IBM Bob. Updated 2026-09-27.</p>
 <section class="stats">
-  <div class="stat"><b>0</b><span>postmortems closed</span></div>
-  <div class="stat"><b>0</b><span>guardrails in CI</span></div>
-  <div class="stat"><b>—</b><span>avg minutes, postmortem to guardrail</span></div>
+  <div class="stat"><b>3</b><span>postmortems closed</span></div>
+  <div class="stat"><b>3</b><span>guardrails in CI</span></div>
+  <div class="stat"><b>20.0</b><span>avg minutes, postmortem to guardrail</span></div>
 </section>
-<p class='empty'>No guardrail reports yet. Run the Guardrail Orchestrator in Bob.</p>
+<article>
+  <header>
+    <h2>INC-2041 — Black Friday promo ended six hours early</h2>
+    <span class="sev" style="color:#ff832b">SEV-2</span>
+    <span class="rule">GR-2041</span>
+  </header>
+  <dl>
+    <dt>Root cause</dt><dd>`shopfront/promotions.py:16` — `_parse_expiry` truncated the ISO-8601 expiry string to 19 characters (`[:19]`), silently discarding the UTC offset (`-06:00`). The resulting naive datetime represented merchant local time, but `is_active` compared it against `datetime.utcnow()` (also naive but already UTC). When the UTC clock hit 18:00 on 2025-11-28 the UTC value numerically exceeded the naked `23:59` local string, marking BF30 expired six hours before the intended midnight Central deadline.</dd>
+    <dt>Bug class</dt><dd>Timezone offset silently discarded when parsing ISO-8601 strings, causing naive-vs-naive datetime comparisons that are wrong by the full UTC offset.</dd>
+    <dt>Fix</dt><dd>Two minimal changes to `shopfront/promotions.py`:</dd>
+    <dt>Minutes</dt><dd>18</dd>
+  </dl>
+</article>
+<article>
+  <header>
+    <h2>INC-2057 — Invoices off by one cent, reconciliation failed</h2>
+    <span class="sev" style="color:#f1c21b">SEV-3</span>
+    <span class="rule">GR-2057</span>
+  </header>
+  <dl>
+    <dt>Root cause</dt><dd>`shopfront/billing.py:15` and `billing.py:26` — two cooperating bugs.</dd>
+    <dt>Bug class</dt><dd>Monetary arithmetic performed with binary floating-point (`float`), producing banker's rounding and accumulation truncation errors at the cent level.</dd>
+    <dt>Fix</dt><dd>Two minimal changes to `shopfront/billing.py`:</dd>
+    <dt>Minutes</dt><dd>22</dd>
+  </dl>
+</article>
+<article>
+  <header>
+    <h2>INC-2063 — Customers charged twice after gateway timeouts</h2>
+    <span class="sev" style="color:#da1e28">SEV-1</span>
+    <span class="rule">GR-2063</span>
+  </header>
+  <dl>
+    <dt>Root cause</dt><dd>`shopfront/payments.py:13` — `gateway.charge(amount_cents=amount_cents, reference=order_id)` is called inside a retry loop without an `idempotency_key`. When the gateway captures the payment but the response times out, the caller raises `GatewayTimeout`, retries, and `gateway.charge()` creates a brand-new charge — the gateway has no way to deduplicate it.</dd>
+    <dt>Bug class</dt><dd>Non-idempotent external API call retried without an idempotency key, causing duplicate side-effects on timeout.</dd>
+    <dt>Fix</dt><dd>Two minimal changes to `shopfront/payments.py`:</dd>
+    <dt>Minutes</dt><dd>20</dd>
+  </dl>
+</article>
 </main></body></html>

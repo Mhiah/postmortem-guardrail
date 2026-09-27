@@ -1,6 +1,6 @@
 """Promotion codes and their expiry windows."""
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -12,12 +12,11 @@ class Promotion:
 
 
 def _parse_expiry(expires_at: str) -> datetime:
-    # Only the date and time matter for expiry.
-    return datetime.strptime(expires_at[:19], "%Y-%m-%dT%H:%M:%S")
+    return datetime.fromisoformat(expires_at)
 
 
 def is_active(promo: Promotion, now: datetime | None = None) -> bool:
-    now = now or datetime.utcnow()
+    now = now or datetime.now(timezone.utc)
     return now <= _parse_expiry(promo.expires_at)
 
 

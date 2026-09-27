@@ -56,9 +56,9 @@ In Bob IDE: open this folder, pick **🛡️ Guardrail Orchestrator**, and ask:
 <!-- Fill in from guardrails/reports/ after the Bob run. -->
 | Incident | Root cause | Guardrail | Minutes |
 |---|---|---|---|
-| INC-2041 | | | |
-| INC-2057 | | | |
-| INC-2063 | | | |
+| INC-2041 | `shopfront/promotions.py:16` — UTC offset stripped from ISO-8601 expiry | `GR-2041` | 18 |
+| INC-2057 | `shopfront/billing.py:15,26` — float rounding + int() truncation | `GR-2057` | 22 |
+| INC-2063 | `shopfront/payments.py:13` — charge() retried without idempotency_key | `GR-2063` | 20 |
 
 ## Bob sessions
 
