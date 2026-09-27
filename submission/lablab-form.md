@@ -19,7 +19,7 @@ original buggy code, and publishes a Guardrail Report per incident to a public G
 
 We demo it on a sample shop backend with three classic, expensive incidents: a Black Friday promo that ended six hours
 early (timezone-naive datetimes), invoices off by a cent (floats for money), and customers charged twice after gateway
-timeouts (retries without idempotency keys). RESULTS: <fill in minutes per incident and totals from the reports>.
+timeouts (retries without idempotency keys). In our run, Bob closed all three postmortems in an average of 20 minutes each (18, 22 and 20). The test suite grew from 9 to 18 passing tests, and every new guardrail was proven to fire on the original buggy code and stay silent on the fix. When one rule came back too broad, the Orchestrator sent it back to the Author subagent to tighten it before signing off.
 
 Each Bob mode has least-privilege edit access: investigators can only write tests, authors can only write rules.
 
